@@ -6,6 +6,7 @@ class Ray:
         self.position = pygame.Vector2(x, y)
         self.direction = pygame.Vector2(math.cos(angle), math.sin(angle))
         self.angle = angle
+        self.last_cast = pygame.Vector2()
     
     def update_pos(self, new_x, new_y):
         self.position.x = new_x
@@ -17,7 +18,7 @@ class Ray:
 
     def draw(self, screen):
         pygame.draw.line(screen, (170, 170, 170), self.position, 
-        self.position + self.direction * 50)
+        self.last_cast)
 
     def cast(self, wall):
         # Line intersection formula

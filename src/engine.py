@@ -3,8 +3,10 @@ import math
 
 from src.wall import Wall
 from src.ray import Ray
-from src.constants import DOWN_OFFSET_CLAMP, RENDER_QUALITY, PLAYER_FOV, PLAYER_SPEED, PLAYER_ROT_SPEED, PLAYER_VROT_SPEED, UP_OFFSET_CLAMP
+from src.constants import DOWN_OFFSET_CLAMP, PLAYER_FOV, PLAYER_SPEED, PLAYER_ROT_SPEED, PLAYER_VROT_SPEED, UP_OFFSET_CLAMP
 from src.utils import clamp
+
+import src.map.map_constructor as MapConstructor
 
 def main():
 
@@ -21,27 +23,19 @@ def main():
     player_rot = 0
     player_vertical_offset = 0
 
+
     # Create some rays
     # Go from -FOV/2, to +FOV/2 around players centre of POV
     rays = [Ray(player_pos.x + 12.5, player_pos.y + 12.5,
             player_rot - (math.radians(PLAYER_FOV) / 2) + 
-            (i / PLAYER_FOV * RENDER_QUALITY) * (math.radians(PLAYER_FOV)))
-            for i in range(PLAYER_FOV * RENDER_QUALITY + 1)]
+            (i / PLAYER_FOV) * (math.radians(PLAYER_FOV)))
+            for i in range(PLAYER_FOV + 1)]
 
     ray_intersect_distances = [False for _ray in rays]
 
-    #
-    #   ---- WALLS GO IN THIS ARRAY ----
-    #
 
-    walls = [Wall(0, 0, 800, 0), Wall(0, 300, 800, 300),
-            Wall(0, 0, 0, 300), Wall(800, 0, 800, 300),
-            Wall(50, 50, 50, 250, (255, 0, 0)), Wall(50, 50, 100, 50, (100, 200, 200)),
-            Wall(50, 70, 80, 70, (200, 200, 255))]
+    walls = MapConstructor.construct_map()
     
-    #
-    #   ---- WALLS GO IN THIS ARRAY ----
-    #
 
     topdown_surf = pygame.Surface((800, 300))
     pov_surf = pygame.Surface((800, 300))
@@ -86,7 +80,9 @@ def main():
             ray.update_pos(player_pos.x + 12.5, player_pos.y + 12.5)
             # Set angles of rays based on the centre of players view
             ray.set_angle(player_rot - (math.radians(PLAYER_FOV)/2) +
-            (i/PLAYER_FOV*RENDER_QUALITY) * math.radians(PLAYER_FOV))
+            (i/PLAYER_FOV) * math.radians(PLAYER_FOV))
+
+            ray.last_cast = ray.position + ray.direction * 50
 
             # Casting
             closest = False
@@ -105,19 +101,24 @@ def main():
                     if closest == False:
                         closest = distance
                         closest_color = wall.color
+                        ray.last_cast = intersect
                     else:
                         # If new closest, set this as closest
                         if closest > distance:
                             closest = distance
                             closest_color = wall.color
+                            ray.last_cast = intersect
             
             # Update this ray's data to new gathered data
             ray_intersect_distances[i] = (closest, closest_color) if closest != False else False
 
         # Topdown Drawing
         topdown_surf.fill(0)
-        for ray in rays:
-            ray.draw(topdown_surf)
+        #for ray in rays:
+            #ray.draw(topdown_surf)
+        fov_poly_points = ([player_pos + pygame.Vector2(12.5, 12.5)] +
+            [ray.last_cast for ray in rays] + [player_pos + pygame.Vector2(12.5, 12.5)])
+        pygame.draw.polygon(topdown_surf, (100, 100, 100), fov_poly_points)
         pygame.draw.rect(topdown_surf, (255, 255, 255), (player_pos, (25, 25)))
         for wall in walls:
             wall.draw(topdown_surf)
@@ -136,12 +137,12 @@ def main():
                 clamp(distance[1][1]/distance[0] * 20, 0, distance[1][1]),
                 clamp(distance[1][2]/distance[0] * 20, 0, distance[1][2])),
                 # Line height calculation
-                (i * 800 / PLAYER_FOV * RENDER_QUALITY,
+                (i * 800 / PLAYER_FOV,
                 (150 + player_vertical_offset) - clamp(150/distance[0] * 15, 0, 150)), 
-                (i * 800 / PLAYER_FOV * RENDER_QUALITY,
+                (i * 800 / PLAYER_FOV,
                 (150 + player_vertical_offset) + clamp(150/distance[0] * 15, 0, 150)),
                 # Line width
-                math.ceil(800 / PLAYER_FOV * RENDER_QUALITY))
+                math.ceil(800 / PLAYER_FOV))
         
         pov_surf.blit(font.render("FPS: " + str(int(clock.get_fps())), True, 0), (10, 10))
 
