@@ -7,4 +7,4 @@ class Wall:
         self.color = color
     
     def draw(self, screen):
-        pygame.draw.line(screen, (255, 255, 255), self.point_one, self.point_two)
+        pygame.draw.line(screen, self.color, self.point_one, self.point_two, 2)

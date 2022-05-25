@@ -3,7 +3,7 @@ import math
 
 from src.wall import Wall
 from src.ray import Ray
-from src.constants import RENDER_QUALITY, PLAYER_FOV, PLAYER_SPEED, PLAYER_ROT_SPEED
+from src.constants import DOWN_OFFSET_CLAMP, RENDER_QUALITY, PLAYER_FOV, PLAYER_SPEED, PLAYER_ROT_SPEED, PLAYER_VROT_SPEED, UP_OFFSET_CLAMP
 from src.utils import clamp
 
 def main():
@@ -13,17 +13,20 @@ def main():
     pygame.display.set_caption("Raycasting Engine")
     clock = pygame.time.Clock()
     font = pygame.font.SysFont("Calbri", 32)
+    pygame.event.set_grab(True)
+    pygame.mouse.set_visible(False)
 
 
     player_pos = pygame.Vector2(400, 150)
     player_rot = 0
+    player_vertical_offset = 0
 
     # Create some rays
     # Go from -FOV/2, to +FOV/2 around players centre of POV
     rays = [Ray(player_pos.x + 12.5, player_pos.y + 12.5,
             player_rot - (math.radians(PLAYER_FOV) / 2) + 
             (i / PLAYER_FOV * RENDER_QUALITY) * (math.radians(PLAYER_FOV)))
-            for i in range(PLAYER_FOV * RENDER_QUALITY)]
+            for i in range(PLAYER_FOV * RENDER_QUALITY + 1)]
 
     ray_intersect_distances = [False for _ray in rays]
 
@@ -49,10 +52,19 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
 
         keys = pygame.key.get_pressed()
+        mouse_change = pygame.mouse.get_rel()
+        
+        player_rot += mouse_change[0] * PLAYER_ROT_SPEED
 
-        player_rot += (keys[pygame.K_RIGHT] - keys[pygame.K_LEFT]) * PLAYER_ROT_SPEED
+        player_vertical_offset = clamp(-mouse_change[1] * PLAYER_VROT_SPEED + player_vertical_offset,
+        UP_OFFSET_CLAMP, DOWN_OFFSET_CLAMP)
+
+        pygame.mouse.set_pos((400, 450))
 
         if keys[pygame.K_w]:
             player_pos += (pygame.Vector2(math.cos(player_rot), math.sin(player_rot))
@@ -67,6 +79,7 @@ def main():
             player_pos += pygame.Vector2(math.cos(player_rot + 1.571), 
             math.sin(player_rot + 1.571)) * PLAYER_SPEED
 
+        
 
         for i, ray in enumerate(rays):
             # Updating pos and rotation
@@ -111,7 +124,7 @@ def main():
 
         # POV Drawing
         pov_surf.fill((100, 100, 190))
-        pygame.draw.rect(pov_surf, (90, 90, 90), (0, 150, 800, 150))
+        pygame.draw.rect(pov_surf, (50, 50, 50), (0, 150 + player_vertical_offset, 800, 160 - player_vertical_offset))
         # Go through all raycast data
         for i, distance in enumerate(ray_intersect_distances):
             # If distance data available
@@ -124,9 +137,9 @@ def main():
                 clamp(distance[1][2]/distance[0] * 20, 0, distance[1][2])),
                 # Line height calculation
                 (i * 800 / PLAYER_FOV * RENDER_QUALITY,
-                150 - clamp(150/distance[0] * 15, 0, 150)), 
+                (150 + player_vertical_offset) - clamp(150/distance[0] * 15, 0, 150)), 
                 (i * 800 / PLAYER_FOV * RENDER_QUALITY,
-                150 + clamp(150/distance[0] * 15, 0, 150)),
+                (150 + player_vertical_offset) + clamp(150/distance[0] * 15, 0, 150)),
                 # Line width
                 math.ceil(800 / PLAYER_FOV * RENDER_QUALITY))
         
