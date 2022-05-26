@@ -138,9 +138,9 @@ def main():
                 clamp(distance[1][2]/distance[0] * 20, 0, distance[1][2])),
                 # Line height calculation
                 (i * 800 / PLAYER_FOV,
-                (150 + player_vertical_offset) - clamp(150/distance[0] * 15, 0, 150)), 
+                (150 + player_vertical_offset) - clamp(150/distance[0] * 15, 0, 150 + abs(player_vertical_offset))),
                 (i * 800 / PLAYER_FOV,
-                (150 + player_vertical_offset) + clamp(150/distance[0] * 15, 0, 150)),
+                (150 + player_vertical_offset) + clamp(150/distance[0] * 15, 0, 150 + abs(player_vertical_offset))),
                 # Line width
                 math.ceil(800 / PLAYER_FOV))
         
