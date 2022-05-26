@@ -2,13 +2,13 @@
 
 RaycastEngine-Py is a custom raycast engine programmed in python.
 It uses pygame in order to render to a window.
-It is simply a raycaster that renders its data, supporting depth and colour.
-All walls to be rendered go into an array called "walls", each element being of type "Wall", which takes 4 parameters, a 5th one being optional:
-  - X point 1
-  - Y point 1
-  - X point 2
-  - Y point 2
-  - (R, G, B) color value *optional*
+It is simply a raycaster that renders its data as a 3D-looking display, supporting depth and colour.
+
+Map data is stored in the src/map/map_data.raymap, as a 40x15 grid of keys:
+  - 0 means blank
+  - R means red square
+  - G means green square
+  - B means blue square
 
 # Dependencies
 
